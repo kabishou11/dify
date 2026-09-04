@@ -298,6 +298,7 @@ class TestSubscribeTrigger:
         )
 
         assert result.endpoint == "https://e"
+        assert result.expires_at == 123
 
 
 class TestUnsubscribeTrigger:

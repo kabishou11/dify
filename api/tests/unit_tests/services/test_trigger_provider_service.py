@@ -263,6 +263,7 @@ def test_add_subscription_commits_encrypted_state(
         properties={"project": "plain"},
         credentials={"token": "plain"},
         subscription_id=subscription_id,
+        expires_at=1_787_560_681,
     )
 
     persisted = trigger_db.get_subscription(subscription_id)
@@ -271,6 +272,7 @@ def test_add_subscription_commits_encrypted_state(
     assert persisted.properties == {"stored": "encrypted"}
     expected_credentials = {} if credential_type == CredentialType.UNAUTHORIZED else {"stored": "encrypted"}
     assert persisted.credentials == expected_credentials
+    assert persisted.expires_at == 1_787_560_681
 
 
 def test_add_subscription_limit_rolls_back_without_cross_tenant_count(
@@ -474,6 +476,11 @@ def test_refresh_subscription_skips_or_persists_refreshed_properties(
         "result": "skipped",
         "expires_at": 500,
     }
+    never_expires = trigger_db.add_subscription(name="never", expires_at=-1)
+    assert TriggerProviderService.refresh_subscription(trigger_db.tenant_id, never_expires.id, now=100) == {
+        "result": "skipped",
+        "expires_at": -1,
+    }
     due = trigger_db.add_subscription(name="due", expires_at=50)
     _patch_provider(mocker, provider_controller)
     _patch_identity_encryption(mocker)
@@ -488,6 +495,7 @@ def test_refresh_subscription_skips_or_persists_refreshed_properties(
 
     persisted = trigger_db.get_subscription(due.id)
     assert result == {"result": "success", "expires_at": 900}
+    assert persisted.expires_at == 900  # type: ignore[union-attr]
     assert persisted.properties == {"project": "refreshed"}  # type: ignore[union-attr]
 
 
