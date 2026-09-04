@@ -508,10 +508,40 @@ describe('AgentPromptEditor', () => {
         screen.getByRole('button', { name: /agentDetail\.configure\.skills\.label/i }),
       ).toBeInTheDocument()
       expect(
-        screen.queryByRole('button', {
+        screen.getByRole('button', { name: /agentDetail\.configure\.files\.label/i }),
+      ).toBeInTheDocument()
+      expect(
+        screen.getByRole('button', { name: /agentDetail\.configure\.tools\.label/i }),
+      ).toBeInTheDocument()
+      expect(
+        screen.getByRole('button', {
           name: /agentDetail\.configure\.knowledgeRetrieval\.label/i,
         }),
-      ).not.toBeInTheDocument()
+      ).toBeInTheDocument()
+    })
+
+    it('should open the knowledge retrieval submenu from the slash menu', async () => {
+      const { store } = renderAgentPromptEditor('/', {
+        knowledgeRetrievals: [{ id: 'retrieval-1', name: 'Release Notes' }],
+      })
+
+      await openSlashMenuFromEditor()
+      fireEvent.click(
+        screen.getByRole('button', {
+          name: /agentDetail\.configure\.knowledgeRetrieval\.label/i,
+        }),
+      )
+
+      expect(screen.getByRole('button', { name: /Release Notes/i })).toBeInTheDocument()
+      expect(
+        screen.getByRole('button', {
+          name: /agentDetail\.configure\.knowledgeRetrieval\.add/i,
+        }),
+      ).toBeInTheDocument()
+
+      fireEvent.click(screen.getByRole('button', { name: /Release Notes/i }))
+
+      expect(store.get(agentComposerPromptAtom)).toBe('[§knowledge:retrieval-1:Release Notes§] ')
     })
 
     it.each(['Review/', 'Use https:/', 'path/to/'])(
